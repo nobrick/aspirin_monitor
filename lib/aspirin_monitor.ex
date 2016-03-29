@@ -19,6 +19,6 @@ defmodule AspirinMonitor do
 
   def test_port(address, port) do
     {:ok, ip} = address |> String.to_char_list |> :inet.parse_address
-    :gen_tcp.connect(ip, port, [:binary, active: false, reuseaddr: true], 3000)
+    :gen_tcp.connect(ip, port, [:binary, active: false, reuseaddr: true], 4000)
   end
 end
