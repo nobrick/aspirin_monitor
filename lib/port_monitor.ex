@@ -29,7 +29,7 @@ defmodule PortMonitor do
 
   def init({:ok, ip, port}) do
     {:ok, manager} = GenEvent.start_link([])
-    GenEvent.add_handler(manager, PortMonitor.Handler, [])
+    GenEvent.add_handler(manager, PortMonitor.SocketHandler, [])
     {:ok, %{ip: ip, port: port, time_ref: :none, event_manager: manager}}
   end
 
