@@ -1,15 +1,16 @@
 defmodule PortMonitor.SocketHandler do
   use GenEvent
-  alias Aspirin.Endpoint.broadcast!
+  import Aspirin.Endpoint, only: [broadcast!: 3]
 
-  def handle_event({:test_port, result}, _state) do
+  def handle_event({:test_port, addr, port, result}, _state) do
     IO.puts("[BROADCAST] #{inspect result}")
+    msg = %{addr: addr, port: port}
     case result do
       :ok ->
-        msg = %{body: :success}
+        msg = put_in(msg, [:body], :success)
         broadcast!("status:all", "test_port", msg)
       {:error, reason} ->
-        msg = %{body: :failure, reason: reason}
+        msg = Map.merge(msg, %{body: :failure, reason: reason})
         broadcast!("status:all", "test_port", msg)
     end
     {:ok, []}

@@ -24,7 +24,7 @@ defmodule PortMonitor do
 
   def test_port_and_notify(addr, port, event_manager) do
     result = test_port(addr, port)
-    GenEvent.notify(event_manager, {:test_port, result})
+    GenEvent.notify(event_manager, {:test_port, addr, port, result})
   end
 
   def init({:ok, ip, port}) do
