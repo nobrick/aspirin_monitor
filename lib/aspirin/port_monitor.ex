@@ -1,4 +1,4 @@
-defmodule PortMonitor do
+defmodule Aspirin.PortMonitor do
   use GenServer
 
   def start_link(ip, port) do

@@ -5,8 +5,9 @@ defmodule AspirinMonitor do
     import Supervisor.Spec, warn: false
 
     children = [
-      # Define workers and child supervisors to be supervised
-      # worker(AspirinMonitor.Worker, [arg1, arg2, arg3]),
+      supervisor(Task.Supervisor,
+        [[name: Aspirin.MonitorManager.TaskSupervisor]]),
+      worker(Aspirin.MonitorManager, [[name: Aspirin.MonitorManager]])
     ]
 
     opts = [strategy: :one_for_one, name: AspirinMonitor.Supervisor]
