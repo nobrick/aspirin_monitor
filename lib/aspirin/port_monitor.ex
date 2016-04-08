@@ -5,6 +5,11 @@ defmodule Aspirin.PortMonitor do
     GenServer.start_link(__MODULE__, {:ok, ip, port}, [])
   end
 
+  def stop(server) do
+    stop_monitor(server)
+    GenServer.stop(server)
+  end
+
   def start_monitor(server) do
     GenServer.call(server, :start_monitor)
   end
