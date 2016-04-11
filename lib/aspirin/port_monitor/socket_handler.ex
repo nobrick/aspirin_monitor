@@ -1,10 +1,12 @@
 defmodule PortMonitor.SocketHandler do
   use GenEvent
   import Aspirin.Endpoint, only: [broadcast!: 3]
+  import Aspirin.MonitorEventView, only: [css_identity: 3]
 
   def handle_event({:test_port, addr, port, result}, _state) do
-    IO.puts("[BROADCAST] #{inspect result}")
-    msg = %{addr: addr, port: port}
+    css_id = css_identity(:port, addr, port)
+    msg = %{addr: addr, port: port, identity: css_id, timestamp: :os.system_time(:milli_seconds)}
+    IO.puts("[BROADCAST] #{inspect result} @ #{inspect msg}")
     case result do
       :ok ->
         msg = put_in(msg, [:body], :success)
