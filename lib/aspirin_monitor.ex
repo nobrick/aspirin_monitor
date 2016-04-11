@@ -5,8 +5,6 @@ defmodule AspirinMonitor do
     import Supervisor.Spec, warn: false
 
     children = [
-      supervisor(Task.Supervisor,
-        [[name: Aspirin.MonitorManager.TaskSupervisor]]),
       worker(Aspirin.MonitorManager, [[name: Aspirin.MonitorManager]])
     ]
 
