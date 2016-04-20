@@ -10,32 +10,61 @@ defmodule Aspirin.PortMonitor do
     GenServer.stop(server)
   end
 
-  def start_monitor(server) do
-    GenServer.call(server, :start_monitor)
+  def start_monitor(server), do: GenServer.call(server, :start_monitor)
+  def stop_monitor(server), do: GenServer.call(server, :stop_monitor)
+
+  def set_last_ok_time(server), do: set_last_ok_time(server, time_now)
+
+  def set_last_ok_time(server, time) do
+    {:ok, _} = GenServer.call(server, {:set_last_ok_time, time})
+    time
   end
 
-  def stop_monitor(server) do
-    GenServer.call(server, :stop_monitor)
+  def get_last_ok_time(server) do
+    {:ok, time} = GenServer.call(server, {:get_last_ok_time})
+    time
+  end
+
+  def time_now do
+    :os.system_time(:milli_seconds)
   end
 
   @inet_opts [:binary, active: false, reuseaddr: true, packet: 0]
 
-  def test_port(addr, port) do
+  def test_port(addr, port, port_monitor) do
     result = with {:ok, ip} <- to_ip(addr),
          {:ok, socket} <- :gen_tcp.connect(ip, port, @inet_opts, 3000),
          do: :gen_tcp.close(socket)
-    result
+    time = case result do
+      :ok -> set_last_ok_time(port_monitor)
+      _   -> get_last_ok_time(port_monitor)
+    end
+    {result, time}
   end
 
-  def test_port_and_notify(addr, port, event_manager) do
-    result = test_port(addr, port)
-    GenEvent.notify(event_manager, {:test_port, addr, port, result})
+  def test_port_and_notify(addr, port, event_manager, port_monitor) do
+    {result, time} = test_port(addr, port, port_monitor)
+    GenEvent.notify(event_manager, {:test_port, addr, port, result, time})
   end
+
+  ## Callbacks
 
   def init({:ok, ip, port}) do
     {:ok, manager} = GenEvent.start_link([])
     GenEvent.add_handler(manager, PortMonitor.SocketHandler, [])
-    {:ok, %{ip: ip, port: port, time_ref: :none, event_manager: manager}}
+    {:ok, %{ip: ip,
+      port: port,
+      time_ref: :none,
+      event_manager: manager,
+      last_ok_time: time_now}}
+  end
+
+  def handle_call({:set_last_ok_time, time}, _from, state) do
+    {:reply, {:ok, time}, %{state | last_ok_time: time}}
+  end
+
+  def handle_call({:get_last_ok_time}, _from, %{last_ok_time: time} = state) do
+    {:reply, {:ok, time}, state}
   end
 
   def handle_call(:start_monitor, _from,
@@ -45,7 +74,7 @@ defmodule Aspirin.PortMonitor do
         {:ok, ref} = :timer.apply_interval(5000,
                                           __MODULE__,
                                           :test_port_and_notify,
-                                          [ip, port, manager])
+                                          [ip, port, manager, self()])
         {:reply, :ok, %{state | time_ref: ref}}
       %{time_ref: _ref} ->
         {:reply, :ok, state}
