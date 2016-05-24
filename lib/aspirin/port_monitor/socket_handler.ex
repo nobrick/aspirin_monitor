@@ -1,4 +1,4 @@
-defmodule PortMonitor.SocketHandler do
+defmodule Aspirin.PortMonitor.SocketHandler do
   use GenEvent
   import Aspirin.Endpoint, only: [broadcast!: 3]
 
